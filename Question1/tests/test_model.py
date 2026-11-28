@@ -18,6 +18,17 @@ def manual(a,b):
 
 
 class ModelTests(unittest.TestCase):
+    # 作用：检验要求提前交付时的落包后等待。输入：self 为测试实例。返回：无。
+    def test_post_wait_uses_downstream_start(self):
+        p = example()
+        task = replace(p.tasks[1], beta=2)
+        p = replace(p, tasks=(task,))
+        result = solve(p)
+        self.assertEqual(result.status,"optimal")
+        self.assertEqual(task.due,7)
+        self.assertEqual(result.lifts[0].end,1)
+        self.assertEqual(audit(p,result)["post_wait"],8)
+
     # 作用：复现三组手算结论。输入：self 为测试实例。返回：无。
     def test_orders(self):
         for a,b,order in [(2,6,"AB"),(4,4,"BA"),(2,4,None)]:
