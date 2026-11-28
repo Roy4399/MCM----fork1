@@ -1,6 +1,6 @@
 # 问题一 · 钢包吊运与共轨行车调度
 
-解压后进入 ladle 目录，使用 Python 3.10+。所有命令从该目录执行。
+进入 `Question1` 目录，使用 Python 3.10+。下列命令从该目录执行。
 
 ```bash
 python -m pip install -r requirements.txt
@@ -38,7 +38,22 @@ optimal 表示该搜索范围内两个目标都已证最优，feasible 表示有
 
 五台行车中前两台执行三项任务，后三台驻车。基线总待吊 6、空驶 3；联合解总待吊 2、空驶 1。局部 DP 固定原方案出窗位置，得到总待吊 2、空驶 3。三者带包均为 5，最小间距均为 2。联合解落包后等待从 8 升至 12，不能据此推断总生产周期缩短。运行入口可看到每项起落点时刻、释放时刻、接收位预约和全部车位轨迹。
 
-此版本面向小窗口与算法核验。轨道为一维有向单位格，重包走直达路径，车辆速度一致。连续时间、车辆异速、大规模生产时窗的性能和实际收益尚未验证。
+这组小算例用于核验算法。轨道为一维有向单位格，重包走直达路径，车辆速度一致。实际收益还取决于现场参数。
+
+## 全周期排程与回放
+
+原来的三个小算例入口不变。需要用比赛计划做全周期排程时，从 `Question1` 运行：
+
+```bash
+python -m runner.plan_only_scenario_one --plan-input ../plan_input.json --output-dir ../results-q1 --lock-dates production --buffer-capacity 3
+```
+
+- `plan_input.json` 使用团队交接包中的清洗计划，包含 `jobs` 和 `rejected_plan_rows`。生产数据和已导出的排班结果不在仓库内，运行前请单独取得。静态排程不读取实绩。
+- `--buffer-capacity 3` 是试算条件；输出按异常浇次日期分目录。两套日期是备选假设，正常炉次按开浇日锁定。
+- 如已有交接包的 `production.json`、`site.json`、`baseline.json` 和 `dispatch.json`，用 `python -m runner.day_lock_delivery --plan-input ../plan_input.json --output-dir <场景结果目录> --audit-only` 回放。回放会核对任务、车号与额定吨位、轨迹、间距和工位占用。
+- 同坐标渡车的原位交接试算用 `runner.colocated_ferry_trial`。它从已核验的旧排班出发，可用 `--service-seconds` 指定假设时长。用 `python -m runner.colocated_ferry_trial --help` 查看具体参数。
+
+全周期排程的生产与行车逻辑分别在 `model/production.py`、`model/network_plan.py` 和 `model/point_dispatch.py`；验证用例仍在 `tests/`。
 
 # 问题二 · 工序波动下的钢包派车与提前待命
 
