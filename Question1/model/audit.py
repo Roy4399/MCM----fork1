@@ -4,7 +4,7 @@ from model.map import fits, safe_trace
 from model.problem import validate
 
 
-# 作用：独立复算硬约束与指标。输入：p 为原计划，result 为候选完整解。返回：指标字典，违约时抛出 ValueError。
+# 作用：独立复算硬约束与指标。输入：p 为原计划，result 为候选完整解。返回：指标字典（post_wait 为落包至下道工序开工的累计等待），违约时抛出 ValueError。
 def audit(p, result):
     validate(p)
     rows = result.frames
@@ -44,7 +44,7 @@ def audit(p, result):
                              (t.receiver,v.end,t.downstream)))
         waits.append(v.start-t.ready)
         loaded += v.end-v.start
-        after_wait += t.due-v.end
+        after_wait += t.downstream-v.end
     if not fits(reservations,p.caps) or (sum(waits),moving) != (result.wait,result.movement):
         raise ValueError("资源超容或目标值不一致")
     return dict(wait=sum(waits), p95=sorted(waits)[ceil(.95*len(waits))-1] if waits else 0,
